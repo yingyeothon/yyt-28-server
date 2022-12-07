@@ -8,11 +8,16 @@ import db from "../../infra/db";
 import format from "date-fns/format";
 import { maxMessageFetchCount } from "../../infra/config";
 
+enum FetchDirection {
+  asc = "asc",
+  desc = "desc",
+}
+
 const FetchMessageQuerystring = Type.Object({
   accessToken: Type.Optional(Type.String()),
   messageId: Type.Optional(Type.String()),
   count: Type.Optional(Type.Number()),
-  dir: Type.Optional(Type.Enum({ asc: "asc", desc: "desc" })),
+  dir: Type.Optional(Type.Enum(FetchDirection)),
 });
 
 type FetchMessageQuerystringType = Static<typeof FetchMessageQuerystring>;
