@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @db.VarChar(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique @db.VarChar(255)
+  verified  Boolean
+}
+
+model DeletedUser {
+  id        String   @id @db.VarChar(30)
+  createdAt DateTime
+  deletedAt DateTime @default(now())
+  email     String   @db.VarChar(255)
+  verified  Boolean
+}
+
+model UserToken {
+  token     String   @id @db.VarChar(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @db.VarChar(30)
+  expired   Boolean
+}
+
+model Topic {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @db.VarChar(30)
+  name      String   @db.VarChar(80)
+  deleted   Boolean
+
+  @@unique([userId, name])
+}
+
+model Message {
+  id        String   @id
+  createdAt DateTime @default(now())
+  topicId   Int
+  body      String   @db.Text
+
+  @@index([topicId])
+}
