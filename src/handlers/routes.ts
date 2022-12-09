@@ -7,7 +7,6 @@ import handleDeleteTopic from "./topic/handleDeleteTopic";
 import handleDeleteUser from "./user/handleDeleteUser";
 import handleExpireToken from "./usertoken/handleExpireToken";
 import handleFetchMessages from "./message/handleFetchMessages";
-import handleIssueAccessToken from "./usertoken/handleIssueAccessToken";
 import handleListTokens from "./usertoken/handleListTokens";
 import handleListTopics from "./topic/handleListTopics";
 import handleListUsers from "./user/handleListUsers";
@@ -30,7 +29,6 @@ export default async function routes(fastify: FastifyInstance) {
 
       handleCreateToken(fastify);
       handleExpireToken(fastify);
-      handleIssueAccessToken(fastify);
       handleListTokens(fastify);
 
       handleCreateTopic(fastify);

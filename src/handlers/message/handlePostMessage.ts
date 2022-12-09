@@ -5,25 +5,30 @@ import {
 } from "../../models/OkResponse";
 import { Static, Type } from "@sinclair/typebox";
 
-import AccessTokenPayload from "../../models/AccessTokenPayload";
 import { FastifyInstance } from "fastify";
 import { broadcast } from "../websocket/connectionHandler";
-import db from "../../infra/db";
+import validateTopicAndToken from "../../infra/validateTopicAndToken";
+
+const PostMessageParams = Type.Object({
+  topicName: Type.String(),
+});
+
+type PostMessageParamsType = Static<typeof PostMessageParams>;
 
 const PostMessageQuerystring = Type.Object({
-  accessToken: Type.Optional(Type.String()),
+  token: Type.Optional(Type.String()),
 });
 
 type PostMessageQuerystringType = Static<typeof PostMessageQuerystring>;
 
 const PostMessageHeaders = Type.Object({
-  ["x-access-token"]: Type.Optional(Type.String()),
+  "x-token": Type.Optional(Type.String()),
 });
 
 type PostMessageHeadersType = Static<typeof PostMessageHeaders>;
 
 const PostMessageCookies = Type.Object({
-  accessToken: Type.Optional(Type.String()),
+  token: Type.Optional(Type.String()),
 });
 
 type PostMessageCookiesType = Static<typeof PostMessageCookies>;
@@ -34,18 +39,20 @@ type PostMessageBodyType = Static<typeof PostMessageBody>;
 
 export default function handlePostMessage(fastify: FastifyInstance) {
   fastify.post<{
+    Params: PostMessageParamsType;
     Querystring: PostMessageQuerystringType;
     Headers: PostMessageHeadersType;
     Cookies: PostMessageCookiesType;
     Body: PostMessageBodyType;
     Reply: OkResponseType;
   }>(
-    "/message",
+    "/message/:topicName",
     {
       schema: {
         summary: "Post message",
         description: "Post a message into the topic.",
         consumes: ["text/plain"],
+        params: PostMessageParams,
         querystring: PostMessageQuerystring,
         headers: PostMessageHeaders,
         body: PostMessageBody,
@@ -57,37 +64,37 @@ export default function handlePostMessage(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { cookies, headers, query } = request;
-      const accessToken =
-        cookies.accessToken ?? headers["x-access-token"] ?? query.accessToken;
-      if (!accessToken) {
+      const token = cookies.token ?? headers["x-token"] ?? query.token;
+      if (!token) {
         request.log.debug(
           { cookies, headers, query },
-          "Cannot find access token"
+          "Cannot find user token"
         );
         return reply
           .send({
-            error:
-              "Cannot find access token. Please use 'accessToken' query parameter",
+            error: "Cannot find user token. Please use 'token' query parameter",
           })
           .status(400);
       }
-      const { topicId } = fastify.jwt.verify<AccessTokenPayload>(
-        accessToken as string
+      const validated = await validateTopicAndToken(
+        request.params.topicName,
+        token
       );
-
-      const topic = await db.topic.findFirstOrThrow({
-        where: { id: topicId },
-      });
-      if (topic.deleted) {
-        request.log.debug({ topicId }, "Already deleted topic");
-        return reply.status(400).send({ error: "Already deleted topic" });
+      if (!validated) {
+        return reply
+          .send({
+            error: "Invalid topic or user token",
+          })
+          .status(401);
       }
+
+      const { topic } = validated;
       if (!request.body) {
-        request.log.debug({ topicId }, "No request body");
+        request.log.debug({ topicId: topic.id }, "No request body");
         return reply.status(400).send({ error: "Empty request body" });
       }
 
-      await broadcast(topicId, request.body);
+      await broadcast(topic.id, request.body);
       return { ok: true };
     }
   );

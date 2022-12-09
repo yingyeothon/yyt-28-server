@@ -1,54 +1,58 @@
 import { Static, Type } from "@sinclair/typebox";
 import { broadcast, onConnect, onDisconnect } from "./connectionHandler";
 
-import AccessTokenPayload from "../../models/AccessTokenPayload";
 import { FastifyInstance } from "fastify";
-import db from "../../infra/db";
+import validateTopicAndToken from "../../infra/validateTopicAndToken";
+
+const WebSocketParams = Type.Object({
+  topicName: Type.String(),
+});
+
+type WebSocketParamsType = Static<typeof WebSocketParams>;
 
 const WebSocketQuerystring = Type.Object({
-  accessToken: Type.String(),
+  token: Type.String(),
 });
 
 type WebSocketQuerystringType = Static<typeof WebSocketQuerystring>;
 
 export default function handleWebSocket(fastify: FastifyInstance) {
-  fastify.get<{ Querystring: WebSocketQuerystringType }>(
-    "/",
+  fastify.get<{
+    Params: WebSocketParamsType;
+    Querystring: WebSocketQuerystringType;
+  }>(
+    "/:topicName",
     {
       websocket: true,
       schema: {
         summary: "WebSocket access point",
         description: "Connect this endpoint with your accessToken.",
+        params: WebSocketParams,
         querystring: WebSocketQuerystring,
       },
     },
     async (connection, request) => {
-      const { accessToken } = request.query;
-      request.log.trace({ accessToken }, "Check access token");
+      const {
+        params: { topicName },
+        query: { token },
+      } = request;
+      request.log.trace({ topicName, token }, "Check user token");
 
-      const { topicId } = fastify.jwt.verify<AccessTokenPayload>(accessToken);
-      const topic = await db.topic.findFirst({ where: { id: topicId } });
-      if (!topic) {
-        request.log.debug({ topicId }, "Cannot find topic");
-        connection.socket.close(1001);
-        return;
-      }
-      if (topic.deleted) {
-        request.log.debug(
-          { topicId },
-          "Cannot connect to already deleted topic"
-        );
+      const validated = await validateTopicAndToken(topicName, token);
+      if (!validated) {
+        request.log.debug({ topicName, token }, "Invalid topic or token");
         connection.socket.close(1001);
         return;
       }
 
-      onConnect(topicId, connection.socket);
+      const { topic } = validated;
+      onConnect(topic.id, connection.socket);
       connection.socket
         .on("message", async (message) => {
-          await broadcast(topicId, message.toString("utf-8"));
+          await broadcast(topic.id, message.toString("utf-8"));
         })
         .on("close", () => {
-          onDisconnect(topicId, connection.socket);
+          onDisconnect(topic.id, connection.socket);
         });
     }
   );
