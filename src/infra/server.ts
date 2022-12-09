@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastifyCookie from "@fastify/cookie";
+import fastifyCors from "@fastify/cors";
 import fastifyJwt from "@fastify/jwt";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySwagger from "@fastify/swagger";
@@ -23,6 +24,10 @@ const server = Fastify({
       : true,
 })
   .withTypeProvider<TypeBoxTypeProvider>()
+  .register(fastifyCors, {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
   .register(fastifyWebSocket, { logLevel: "trace" })
   .register(fastifyCookie)
   .register(fastifyJwt, {
