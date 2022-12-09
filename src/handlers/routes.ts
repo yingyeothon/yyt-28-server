@@ -15,22 +15,31 @@ import handlePostMessage from "./message/handlePostMessage";
 import handleWebSocket from "./websocket/handleWebSocket";
 
 export default async function routes(fastify: FastifyInstance) {
-  handleWebSocket(fastify);
+  fastify.register(
+    async function (fastify) {
+      handleWebSocket(fastify);
+    },
+    { prefix: "/websocket" }
+  );
+  fastify.register(
+    async function (fastify) {
+      handleCreateUser(fastify);
+      handleDeleteUser(fastify);
+      handleListUsers(fastify);
+      handleActivateUser(fastify);
 
-  handleCreateUser(fastify);
-  handleDeleteUser(fastify);
-  handleListUsers(fastify);
-  handleActivateUser(fastify);
+      handleCreateToken(fastify);
+      handleExpireToken(fastify);
+      handleIssueAccessToken(fastify);
+      handleListTokens(fastify);
 
-  handleCreateToken(fastify);
-  handleExpireToken(fastify);
-  handleIssueAccessToken(fastify);
-  handleListTokens(fastify);
+      handleCreateTopic(fastify);
+      handleDeleteTopic(fastify);
+      handleListTopics(fastify);
 
-  handleCreateTopic(fastify);
-  handleDeleteTopic(fastify);
-  handleListTopics(fastify);
-
-  handleFetchMessages(fastify);
-  handlePostMessage(fastify);
+      handleFetchMessages(fastify);
+      handlePostMessage(fastify);
+    },
+    { prefix: "/api" }
+  );
 }
