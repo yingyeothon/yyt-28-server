@@ -7,6 +7,7 @@ import TopicResponse from "./models/TopicResponse";
 import db from "../../infra/db";
 import format from "date-fns/format";
 import { maxTopicCount } from "../../infra/config";
+import { serializeError } from "serialize-error";
 
 const CreateTopicParams = Type.Object({
   userId: Type.String(),
@@ -96,10 +97,16 @@ export default function handleCreateTopic(fastify: FastifyInstance) {
         };
       } catch (error: any) {
         if (/Unique constraint failed/.test(error.message)) {
-          request.log.warn({ name, error }, "Maybe topic name is duplicate");
+          request.log.warn(
+            { name, error: serializeError(error) },
+            "Maybe topic name is duplicate"
+          );
           return reply.status(400).send({ error: "Duplicate topic name" });
         }
-        request.log.error({ name, error }, "Cannot create topic");
+        request.log.error(
+          { name, error: serializeError(error) },
+          "Cannot create topic"
+        );
         return reply
           .status(500)
           .send({ error: "Error occurred from database" });

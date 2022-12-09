@@ -5,6 +5,7 @@ import { FastifyInstance } from "fastify";
 import UserResponse from "./models/UserResponse";
 import cuid from "cuid";
 import db from "../../infra/db";
+import { serializeError } from "serialize-error";
 
 const CreateUserRequest = Type.Object({
   email: Type.String({ format: "email" }),
@@ -55,10 +56,16 @@ export default function handleCreateUser(fastify: FastifyInstance) {
         };
       } catch (error: any) {
         if (/Unique constraint failed/.test(error.message)) {
-          request.log.warn({ email, error }, "Maybe email is duplicate");
+          request.log.warn(
+            { email, error: serializeError(error) },
+            "Maybe email is duplicate"
+          );
           return reply.status(400).send({ error: "Duplicate email address" });
         }
-        request.log.error({ email, error }, "Cannot create user");
+        request.log.error(
+          { email, error: serializeError(error) },
+          "Cannot create user"
+        );
         return reply
           .status(500)
           .send({ error: "Error occurred from database" });
