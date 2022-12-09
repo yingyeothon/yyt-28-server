@@ -8,9 +8,7 @@
     "prebuild": "prisma generate",
     "build": "rm -rf dist && tsc",
     "db:update": "prisma migrate dev",
-    "db:export": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
-    "docker:build": "docker build -t lacti/yyt-28-server .",
-    "docker:push": "docker push lacti/yyt-28-server"
+    "db:export": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script"
   },
   "author": "jaeyoung.choi",
   "license": "ISC",
