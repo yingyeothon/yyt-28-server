@@ -4,6 +4,7 @@ import { Static, Type } from "@sinclair/typebox";
 import { FastifyInstance } from "fastify";
 import UserResponse from "./models/UserResponse";
 import db from "../../infra/db";
+import { isLocalhost } from "../../infra/localhost";
 
 const ListUsersResponse = Type.Object({
   ok: Type.Literal(true),
@@ -26,7 +27,7 @@ export default function handleListUsers(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      if (request.ip !== "127.0.0.1") {
+      if (!isLocalhost(request)) {
         request.log.warn({}, "We should access User API in localhost");
         return reply.status(404);
       }

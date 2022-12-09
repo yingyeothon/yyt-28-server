@@ -8,6 +8,7 @@ import { Static, Type } from "@sinclair/typebox";
 import { FastifyInstance } from "fastify";
 import db from "../../infra/db";
 import { disconnectAll } from "../websocket/connectionHandler";
+import { isLocalhost } from "../../infra/localhost";
 
 const DeleteUserParams = Type.Object({
   userId: Type.String(),
@@ -32,7 +33,7 @@ export default function handleDeleteUser(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      if (request.ip !== "127.0.0.1") {
+      if (!isLocalhost(request)) {
         request.log.warn({}, "We should access User API in localhost");
         return reply.status(404);
       }

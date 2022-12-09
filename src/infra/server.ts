@@ -8,6 +8,7 @@ import fastifySwaggerUi from "@fastify/swagger-ui";
 import fastifyWebSocket from "@fastify/websocket";
 
 const server = Fastify({
+  trustProxy: true,
   logger:
     process.env.NODE_ENV === "development"
       ? {

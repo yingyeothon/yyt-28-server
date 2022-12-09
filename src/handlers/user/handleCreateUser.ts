@@ -5,6 +5,7 @@ import { FastifyInstance } from "fastify";
 import UserResponse from "./models/UserResponse";
 import cuid from "cuid";
 import db from "../../infra/db";
+import { isLocalhost } from "../../infra/localhost";
 import { serializeError } from "serialize-error";
 
 const CreateUserRequest = Type.Object({
@@ -40,7 +41,7 @@ export default function handleCreateUser(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      if (request.ip !== "127.0.0.1") {
+      if (!isLocalhost(request)) {
         request.log.warn({}, "We should access User API in localhost");
         return reply.status(404);
       }
