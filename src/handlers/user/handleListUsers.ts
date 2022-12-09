@@ -3,8 +3,8 @@ import { Static, Type } from "@sinclair/typebox";
 
 import { FastifyInstance } from "fastify";
 import UserResponse from "./models/UserResponse";
+import authorizeAdmin from "../../infra/authorizeAdmin";
 import db from "../../infra/db";
-import { isLocalhost } from "../../infra/localhost";
 
 const ListUsersResponse = Type.Object({
   ok: Type.Literal(true),
@@ -25,13 +25,9 @@ export default function handleListUsers(fastify: FastifyInstance) {
           404: ErrorResponse,
         },
       },
+      preValidation: authorizeAdmin,
     },
-    async (request, reply) => {
-      if (!isLocalhost(request)) {
-        request.log.warn({}, "We should access User API in localhost");
-        return reply.status(404);
-      }
-
+    async (request) => {
       const users = await db.user.findMany();
       request.log.debug({ users: users.length }, "Find all users");
       return {

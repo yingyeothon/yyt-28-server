@@ -3,9 +3,9 @@ import { Static, Type } from "@sinclair/typebox";
 
 import { FastifyInstance } from "fastify";
 import UserResponse from "./models/UserResponse";
+import authorizeAdmin from "../../infra/authorizeAdmin";
 import cuid from "cuid";
 import db from "../../infra/db";
-import { isLocalhost } from "../../infra/localhost";
 import { serializeError } from "serialize-error";
 
 const CreateUserRequest = Type.Object({
@@ -39,12 +39,9 @@ export default function handleCreateUser(fastify: FastifyInstance) {
           500: ErrorResponse,
         },
       },
+      preValidation: authorizeAdmin,
     },
     async (request, reply) => {
-      if (!isLocalhost(request)) {
-        request.log.warn({}, "We should access User API in localhost");
-        return reply.status(404);
-      }
       const { email } = request.body;
       try {
         const newUser = await db.user.create({

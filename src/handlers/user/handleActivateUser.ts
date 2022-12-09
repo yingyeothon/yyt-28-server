@@ -6,8 +6,9 @@ import {
 import { Static, Type } from "@sinclair/typebox";
 
 import { FastifyInstance } from "fastify";
+import { LoginUserCookiesType } from "./models/LoginUserCookies";
+import authorizeAdmin from "../../infra/authorizeAdmin";
 import db from "../../infra/db";
-import { isLocalhost } from "../../infra/localhost";
 
 const ActivateUserParams = Type.Object({
   userId: Type.String(),
@@ -16,7 +17,11 @@ const ActivateUserParams = Type.Object({
 type ActivateUserParamsType = Static<typeof ActivateUserParams>;
 
 export default function handleActivateUser(fastify: FastifyInstance) {
-  fastify.post<{ Params: ActivateUserParamsType; Reply: OkResponseType }>(
+  fastify.post<{
+    Params: ActivateUserParamsType;
+    Cookies: LoginUserCookiesType;
+    Reply: OkResponseType;
+  }>(
     "/user/:userId/activate",
     {
       schema: {
@@ -25,13 +30,9 @@ export default function handleActivateUser(fastify: FastifyInstance) {
         params: ActivateUserParams,
         response: { 200: SuccessResponse, 404: ErrorResponse },
       },
+      preValidation: authorizeAdmin,
     },
     async (request, reply) => {
-      if (!isLocalhost(request)) {
-        request.log.warn({}, "We should access User API in localhost");
-        return reply.status(404);
-      }
-
       const { userId } = request.params;
       const user = await db.user.findFirst({ where: { id: userId } });
       if (!user) {

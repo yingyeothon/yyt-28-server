@@ -6,9 +6,9 @@ import {
 import { Static, Type } from "@sinclair/typebox";
 
 import { FastifyInstance } from "fastify";
+import authorizeAdmin from "../../infra/authorizeAdmin";
 import db from "../../infra/db";
 import { disconnectAll } from "../websocket/connectionHandler";
-import { isLocalhost } from "../../infra/localhost";
 
 const DeleteUserParams = Type.Object({
   userId: Type.String(),
@@ -31,12 +31,9 @@ export default function handleDeleteUser(fastify: FastifyInstance) {
           404: ErrorResponse,
         },
       },
+      preValidation: authorizeAdmin,
     },
     async (request, reply) => {
-      if (!isLocalhost(request)) {
-        request.log.warn({}, "We should access User API in localhost");
-        return reply.status(404);
-      }
       const { userId } = request.params;
       const user = await db.user.findFirst({ where: { id: userId } });
       if (!user) {
