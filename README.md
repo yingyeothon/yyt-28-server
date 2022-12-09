@@ -2,32 +2,25 @@
 
 ## Stack
 
+- NGINX
 - Mariadb
-- Node.js 16
+- Node.js 18
 
 ```bash
-sudo systemctl start redis mariadb mariadb-server
+sudo yum install nginx docker
 
-sudo systemctl start redis
-sudo systemctl start mariadb
-
-sudo systemctl enable --now mariadb
-sudo systemctl enable --now redis
-
-sudo yum install -y gcc-c++ make
-curl -sL https://rpm.nodesource.com/setup_16.x | sudo -E bash -
-sudo yum install -y nodejs
-
-sudo yum install git
+sudo systemctl start nginx
+sudo systemctl start docker
+sudo systemctl enable --now nginx
+sudo systemctl enable --now docker
 ```
 
 ## Certbot
 
 ```bash
-# sudo yum -y install epel-release yum-utils
 sudo amazon-linux-extras install epel
 sudo yum install certbot certbot-nginx
-sudo yum install nginx  # Download cert files.
+sudo yum install nginx
 sudo service nginx start
 
 sudo certbot --nginx -d your.domain.name --email your-email@address.com --agree-tos

@@ -1,13 +1,18 @@
 {
   "name": "yyt-28-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Stateful WebSocket server",
+  "main": "src/main.ts",
   "scripts": {
-    "start": "ts-node src/main.ts"
+    "start": "cross-env NODE_ENV=development ts-node src/main.ts",
+    "prebuild": "prisma generate",
+    "build": "rm -rf dist && tsc",
+    "db:update": "prisma migrate dev",
+    "db:export": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
+    "docker:build": "docker build -t lacti/yyt-28-server .",
+    "docker:push": "docker push lacti/yyt-28-server"
   },
-  "keywords": [],
-  "author": "",
+  "author": "jaeyoung.choi",
   "license": "ISC",
   "dependencies": {
     "@fastify/cookie": "^8.3.0",
@@ -28,6 +33,7 @@
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
