@@ -25,7 +25,7 @@
     "cuid": "^2.1.8",
     "date-fns": "^2.29.3",
     "fastify": "^4.10.2",
-    "serialize-error": "^9.1.1"
+    "serialize-error": "8"
   },
   "devDependencies": {
     "@types/node": "^16.18.4",
