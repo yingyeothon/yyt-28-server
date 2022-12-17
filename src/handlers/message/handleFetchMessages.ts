@@ -118,22 +118,35 @@ export default function handleFetchMessages(fastify: FastifyInstance) {
         });
       }
 
+      function fetchAsc() {
+        return db.message.findMany({
+          where: { topicId: topic.id, id: { gt: messageId } },
+          orderBy: { id: "asc" },
+          take: count,
+        });
+      }
+      async function fetchDesc() {
+        let maxMessageId = messageId;
+        if (!maxMessageId) {
+          const max = await db.message.findMany({
+            orderBy: { id: "desc" },
+            take: 1,
+          });
+          maxMessageId = max[0]?.id ?? "";
+        }
+        return await db.message.findMany({
+          where: { topicId: topic.id, id: { lte: maxMessageId } },
+          orderBy: { id: "desc" },
+          take: count,
+        });
+      }
       const messages: Message[] =
-        dir === "asc"
-          ? await db.message.findMany({
-              where: { topicId: topic.id, id: { gt: messageId } },
-              orderBy: { id: "asc" },
-              take: count,
-            })
-          : await db.message.findMany({
-              where: { topicId: topic.id, id: { lte: messageId } },
-              orderBy: { id: "desc" },
-              take: count,
-            });
+        dir === "asc" ? await fetchAsc() : await fetchDesc();
       request.log.trace(
         { topicId: topic.id, count, dir, messages: messages.length },
         "Fetch messages"
       );
+
       return {
         ok: true,
         result: messages.map((message) => ({
