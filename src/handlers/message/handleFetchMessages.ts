@@ -85,22 +85,18 @@ export default function handleFetchMessages(fastify: FastifyInstance) {
           { cookies, headers, query },
           "Cannot find user token"
         );
-        return reply
-          .send({
-            error: "Cannot find user token. Please use 'token' query parameter",
-          })
-          .status(400);
+        return reply.status(400).send({
+          error: "Cannot find user token. Please use 'token' query parameter",
+        });
       }
       const validated = await validateTopicAndToken(
         request.params.topicName,
         token
       );
       if (!validated) {
-        return reply
-          .send({
-            error: "Invalid topic or user token",
-          })
-          .status(401);
+        return reply.status(401).send({
+          error: "Invalid topic or user token",
+        });
       }
 
       const { topic } = validated;

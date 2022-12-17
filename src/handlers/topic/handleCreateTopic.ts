@@ -56,11 +56,9 @@ export default function handleCreateTopic(fastify: FastifyInstance) {
       } = request;
       if (!name) {
         request.log.debug({ name, userId }, "No 'name' in request body");
-        return reply
-          .send({
-            error: `Please send topic name via request body like {"name":"topic-name"}`,
-          })
-          .status(400);
+        return reply.status(400).send({
+          error: `Please send topic name via request body like {"name":"topic-name"}`,
+        });
       }
 
       if (
