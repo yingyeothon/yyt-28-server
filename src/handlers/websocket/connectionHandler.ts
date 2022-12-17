@@ -28,15 +28,21 @@ export async function disconnectAll(topicId: number) {
   delete topicConnections[topicId];
 }
 
-export async function broadcast(topicId: number, message: string) {
-  const inserted = await db.message.create({
-    data: {
-      id: cuid(),
-      topicId,
-      body: message,
-    },
-  });
-  server.log.trace({ messageId: inserted.id }, "Register message");
+export async function broadcast(
+  topicId: number,
+  message: string,
+  dbStore: boolean
+) {
+  if (dbStore) {
+    const inserted = await db.message.create({
+      data: {
+        id: cuid(),
+        topicId,
+        body: message,
+      },
+    });
+    server.log.trace({ messageId: inserted.id }, "Register message");
+  }
 
   (topicConnections[topicId] ?? []).forEach((socket) => {
     server.log.trace({ topicId, message }, "Broadcast message");

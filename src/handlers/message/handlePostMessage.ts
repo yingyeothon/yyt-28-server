@@ -7,6 +7,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 import { FastifyInstance } from "fastify";
 import { broadcast } from "../websocket/connectionHandler";
+import isVolatileTopic from "../../models/isVolatileTopic";
 import validateTopicAndToken from "../../infra/validateTopicAndToken";
 
 const PostMessageParams = Type.Object({
@@ -85,12 +86,18 @@ export default function handlePostMessage(fastify: FastifyInstance) {
       }
 
       const { topic } = validated;
+      if (isVolatileTopic(topic.name)) {
+        return reply.status(400).send({
+          error: "Cannot use PostMessage API when topic is volatile",
+        });
+      }
+
       if (!request.body) {
         request.log.debug({ topicId: topic.id }, "No request body");
         return reply.status(400).send({ error: "Empty request body" });
       }
 
-      await broadcast(topic.id, request.body);
+      await broadcast(topic.id, request.body, true);
       return { ok: true };
     }
   );

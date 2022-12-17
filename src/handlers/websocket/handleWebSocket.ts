@@ -2,6 +2,7 @@ import { Static, Type } from "@sinclair/typebox";
 import { broadcast, onConnect, onDisconnect } from "./connectionHandler";
 
 import { FastifyInstance } from "fastify";
+import isVolatileTopic from "../../models/isVolatileTopic";
 import validateTopicAndToken from "../../infra/validateTopicAndToken";
 
 const WebSocketParams = Type.Object({
@@ -46,10 +47,12 @@ export default function handleWebSocket(fastify: FastifyInstance) {
       }
 
       const { topic } = validated;
+      const volatileTopic = isVolatileTopic(topic.name);
+
       onConnect(topic.id, connection.socket);
       connection.socket
         .on("message", async (message) => {
-          await broadcast(topic.id, message.toString("utf-8"));
+          await broadcast(topic.id, message.toString("utf-8"), volatileTopic);
         })
         .on("close", () => {
           onDisconnect(topic.id, connection.socket);
